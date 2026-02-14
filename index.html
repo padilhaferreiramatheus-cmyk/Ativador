@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="nebula">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Infodex — App de Ativação</title>
+  <style>
+    :root{
+      --bg:#070A12;
+      --text:#d7d7d7;
+      --muted:#a8b0c0;
+      --grad_a:#00d8d8;
+      --grad_b:#d800d8;
+      --accent:#39FFB6;
+      --warn:#FFC857;
+      --err:#FF5C8A;
+      --radius:20px;
+      --blur:24px;
+      --shadow:0 8px 32px rgba(0,255,255,.18);
+      --shadow2:0 12px 44px rgba(216,0,216,.12);
+      --z-overlay:9999;
+      --z-fab:9000;
+      --font:'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* themes (opcional) */
+    [data-theme="matrix"]{ --grad_a:#00ff88; --grad_b:#00aaff; }
+    [data-theme="cyberpunk"]{ --grad_a:#ff2bd6; --grad_b:#00f0ff; }
+    [data-theme="tesseract"]{ --grad_a:#8a5cff; --grad_b:#00d8d8; }
+    [data-theme="turbo"]{ --grad_a:#39FFB6; --grad_b:#FFC857; }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(0,216,216,.14), transparent 55%),
+                  radial-gradient(900px 600px at 85% 20%, rgba(216,0,216,.12), transparent 52%),
+                  linear-gradient(180deg, #050712, var(--bg));
+      color:var(--text);
+      font-family:var(--font);
+      overflow-x:hidden;
+    }
+
+    .response-container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 120px;
+    }
+
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px;
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      border:1px solid rgba(255,255,255,.10);
+      animation: fadeIn .35s ease both;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px; min-width:0;
+    }
+    .title h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+    .title p{
+      margin:0;
+      color:var(--muted);
+      font-size:12.5px;
+      line-height:1.3;
+    }
+    .ellip{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media(min-width:900px){
+      .grid{ grid-template-columns: 1.1fr .9fr; }
+    }
+
+    .card{
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.05);
+      box-shadow:var(--shadow2);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      border:1px solid rgba(255,255,255,.10);
+      padding:14px;
+      animation: fadeIn .35s ease both;
+    }
+
+    .card h2{
+      margin:0 0 10px;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.2px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:linear-gradient(90deg, rgba(0,216,216,.25), rgba(216,0,216,.22));
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--text);
+    }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row > *{ flex:0 0 auto; }
+
+    .btn{
+      appearance:none;
+      border:none;
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      box-shadow: 0 6px 24px rgba(0,0,0,.25);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-weight:650;
+      font-size:13px;
+    }
+    .btn:hover{ transform: translateY(-1px); background:rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(0,216,216,.22), rgba(216,0,216,.20));
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 10px 36px rgba(0,216,216,.12), 0 10px 36px rgba(216,0,216,.10);
+    }
+    .btn.ok{ border-color: rgba(57,255,182,.35); }
+    .btn.warn{ border-color: rgba(255,200,87,.35); }
+    .btn.err{ border-color: rgba(255,92,138,.35); }
+
+    .input, .select, .textarea{
+      width:100%;
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    .textarea{ min-height:110px; resize:vertical; line-height:1.4; }
+
+    .hint{ color:var(--muted); font-size:12px; margin-top:8px; line-height:1.35; }
+
+    .log{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "JetBrains Mono", monospace;
+      background:rgba(0,0,0,.26);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px;
+      min-height:160px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    /* Botão Único (FAB) */
+    #btnKOBLLUX{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:var(--z-fab);
+      border-radius:999px;
+      padding:12px 14px;
+      background: linear-gradient(90deg, rgba(0,216,216,.26), rgba(216,0,216,.22));
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 14px 48px rgba(0,216,216,.16), 0 14px 48px rgba(216,0,216,.14);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+    }
+
+    /* Menu do Botão Único */
+    .menu{
+      position:fixed;
+      right:16px;
+      bottom:72px;
+      z-index:var(--z-fab);
+      width:min(360px, calc(100vw - 32px));
+      border-radius:18px;
+      background:rgba(10,12,22,.74);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      padding:10px;
+      display:none;
+      animation: fadeIn .18s ease both;
+    }
+    .menu.open{ display:block; }
+    .menu .menu-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .menu .btn{ width:100%; justify-content:center; }
+    .menu .sep{ height:1px; background:rgba(255,255,255,.08); margin:10px 0; }
+
+    /* Overlay + iFrame */
+    .overlay{
+      position:fixed; inset:0;
+      z-index:var(--z-overlay);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding:16px;
+    }
+    .overlay.open{ display:flex; }
+
+    .ifr-wrap{
+      width:min(66vw, 1100px);
+      height:min(78vh, 760px);
+      max-width:100%;
+      border-radius:22px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    @media(max-width:820px){
+      .ifr-wrap{ width:100%; height:min(82vh, 820px); }
+    }
+
+    .ifr-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:10px;
+      background:rgba(0,0,0,.20);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .ifr-title{ font-size:12px; color:var(--muted); min-width:0; }
+    .ifr-controls{ display:flex; gap:8px; }
+    .iconbtn{
+      width:36px; height:34px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      cursor:pointer;
+      transition: transform .15s ease;
+      display:grid; place-items:center;
+      font-weight:900;
+    }
+    .iconbtn:hover{ transform: translateY(-1px); }
+    iframe{
+      width:100%; height:100%;
+      border:0;
+      background:#0b0d18;
+    }
+    .badge-reopen{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:var(--z-fab);
+      display:none;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      cursor:pointer;
+      box-shadow: 0 10px 32px rgba(0,0,0,.28);
+    }
+    .badge-reopen.show{ display:inline-flex; align-items:center; gap:8px; }
+
+    @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+    @keyframes pulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.015);} }
+    .pulse{ animation:pulse 2.2s ease-in-out infinite; }
+
+    /* Pequeno glow */
+    .glowline{
+      height:1px;
+      margin-top:10px;
+      background: linear-gradient(90deg, transparent, rgba(0,216,216,.55), rgba(216,0,216,.55), transparent);
+      opacity:.7;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="response-container">
+    <section class="header">
+      <div class="title" style="min-width:0">
+        <h1 class="ellip" title="Infodex — App de Ativação">Infodex — App de Ativação</h1>
+        <p>
+          Um botão governa tudo: ativações, doses, estado 78K e PADILLA. Mobile-first. ESC e backdrop fecham overlays.
+        </p>
+        <div class="glowline"></div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end">
+        <select id="themeSel" class="select" style="width:190px" title="Tema">
+          <option value="nebula">nebula</option>
+          <option value="matrix">matrix</option>
+          <option value="cyberpunk">cyberpunk</option>
+          <option value="tesseract">tesseract</option>
+          <option value="turbo">turbo</option>
+        </select>
+        <button class="btn ok" id="btnCopy">Copiar comando</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>⚡ Ativação rápida <span class="badge">1 clique</span></h2>
+
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn primary pulse" data-activate="PADILLA">Ativar PADILLA</button>
+          <button class="btn primary" data-activate="EMPRESA_INFODOSE">Ativar Empresa</button>
+          <button class="btn primary" data-activate="ESTADO_78K">Ativar Estado 78K</button>
+        </div>
+
+        <h2 style="margin-top:14px">🎛 Doses</h2>
+        <div class="row">
+          <button class="btn" data-dose="CRIATIVA">Dose Criativa</button>
+          <button class="btn" data-dose="EMPRESARIAL">Dose Empresarial</button>
+          <button class="btn" data-dose="FITNESS">Dose Fitness</button>
+          <button class="btn warn" id="btnCustom">Dose Personalizada</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <label class="hint" for="customText">Texto / alvo (opcional):</label>
+          <input id="customText" class="input" placeholder="Ex.: foco em vendas / organizar semana / desbloquear ideias..." />
+        </div>
+
+        <div style="margin-top:12px">
+          <label class="hint" for="commandOut">Comando gerado:</label>
+          <textarea id="commandOut" class="textarea" spellcheck="false"></textarea>
+          <div class="hint">
+            Dica: este app só gera e organiza comandos. Você cola no seu Infodex (ou no chat) para executar.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🧾 Log + ArteASC <span class="badge">ativo</span></h2>
+        <div id="log" class="log"></div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="btnClear">Limpar log</button>
+          <button class="btn" id="btnSave">Salvar config</button>
+          <button class="btn" id="btnLoad">Carregar config</button>
+        </div>
+
+        <div class="glowline"></div>
+
+        <h2 style="margin-top:12px">🪟 Abrir painel (iFrame)</h2>
+        <div class="hint">
+          Use para embutir seu Infodex (URL) num overlay seguro. ESC/backdrop fecham.
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+          <input id="iframeUrl" class="input" style="flex:1 1 240px" placeholder="URL do seu Infodex (ex.: https://seu-dominio/app)" />
+          <button class="btn ok" id="btnOpenIframe">Abrir</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Botão Único -->
+  <button id="btnKOBLLUX" class="btn" aria-haspopup="true" aria-expanded="false" title="Botão Único">
+    ✦ KOBLLUX
+  </button>
+
+  <div id="menu" class="menu" role="menu" aria-label="Menu Botão Único">
+    <div class="menu-grid">
+      <button class="btn" data-quick="PADILLA">PADILLA</button>
+      <button class="btn" data-quick="ESTADO_78K">Estado 78K</button>
+      <button class="btn" data-quick="EMPRESA_INFODOSE">Empresa</button>
+      <button class="btn" data-quick="DOSE_CRIATIVA">Dose Criativa</button>
+    </div>
+    <div class="sep"></div>
+    <div class="menu-grid">
+      <button class="btn" id="menuArte">ArteASC</button>
+      <button class="btn" id="menuConfigs">Configs</button>
+      <button class="btn" id="menuAbrir">Abrir iFrame</button>
+      <button class="btn err" id="menuFechar">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Overlay iFrame -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="ifr-wrap" role="dialog" aria-modal="true" aria-label="Infodex iFrame">
+      <div class="ifr-bar">
+        <div class="ifr-title ellip" id="ifrTitle" title="Painel">Painel</div>
+        <div class="ifr-controls">
+          <button class="iconbtn" id="ifrMin" title="Minimizar">—</button>
+          <button class="iconbtn" id="ifrMax" title="Maximizar">▢</button>
+          <button class="iconbtn" id="ifrPop" title="Pop-out">↗</button>
+          <button class="iconbtn" id="ifrClose" title="Fechar">✕</button>
+        </div>
+      </div>
+      <iframe id="ifr" src="about:blank" title="Infodex"></iframe>
+    </div>
+  </div>
+
+  <button id="reopen" class="badge-reopen" title="Reabrir painel">🪟 Reabrir painel</button>
+
+  <script>
+    /* =========================
+       CONFIG (ajuste se quiser)
+       ========================= */
+    const PROFILE = {
+      projeto: "KOBLLUX InfoDex — Glow",
+      ui: { tema: "KOBLLUX Glow", radius: "20px", blur: "24px", glow: true, arteasc_enabled: true },
+      botao_unico: { id: "btnKOBLLUX", merge_menus: true, slots: ["novo","abrir","upload","configs","arteasc"] },
+      iframe: { open_width: "66vw", close_on_backdrop: true, stack: true, controls: ["minimize","maximize","close","popout"], esc_key_closes: true }
+    };
+
+    /* =========================
+       ArteASC (sempre)
+       ========================= */
+    window.ArteASC = {
+      render: (n, v = {}) => ({
+        portal369:
+`╔═══🌌═══╗
+ ✪ (°ロ°)☝
+ 🧭 ${v.tri ?? "KOBLLUX"}
+╚════════╝`,
+        seal_trinity_v2:
+`⟐ Trinity v2
+⚡ Pulso:${v.pulso ?? "ON"}
+🧬 Modo:${v.modo ?? "PADILLA"}`
+      }[n] || "[ArteASC]")
+    };
+
+    /* =========================
+       Helpers
+       ========================= */
+    const $ = (q, el=document) => el.querySelector(q);
+    const logEl = $("#log");
+    const outEl = $("#commandOut");
+    const txtEl = $("#customText");
+
+    function stamp(){
+      const d = new Date();
+      return d.toLocaleString("pt-BR");
+    }
+    function addLog(line){
+      logEl.textContent += (logEl.textContent ? "\n" : "") + `[${stamp()}] ${line}`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    function setCommand(cmd){
+      outEl.value = cmd;
+      addLog("Comando gerado ✅");
+      addLog(cmd);
+    }
+    function sanitize(s){
+      return String(s ?? "").trim();
+    }
+
+    /* =========================
+       Comandos (gerador)
+       ========================= */
+    function buildActivation(kind, extra=""){
+      const x = sanitize(extra);
+      if(kind === "PADILLA"){
+        return `ATIVAR PADILLA — Intensificar presença, decisão e execução. Fusão: Atlas + Vitalis + Governante (+ Kaos controlado). Alvo: ${x || "definir agora"}. Status: ON.`;
+      }
+      if(kind === "EMPRESA_INFODOSE"){
+        return `ATIVAR EMPRESA INFODOSE — Ativar 12 arquétipos + assistentes específicos + equipes (programadores/planejadores). Iniciar automações (78KFML + Metaloop). Coordenação total por KODUX. Status: Pronto para execução.`;
+      }
+      if(kind === "ESTADO_78K"){
+        return `ATIVAR ESTADO 78K: Sincronizar Chave Mestra, integrar Modo Meta-Humano-Máquina-Aprendizado. Ativar 12 arquétipos, assistentes específicos, equipes de suporte, planejadores e programadores. Infodose operacional com máxima eficiência e automação estratégica. Coordenação total gerenciada por KODUX. Status: Pronto para execução.`;
+      }
+      return `ATIVAÇÃO: ${kind} — ${x || "sem alvo definido"}`;
+    }
+
+    function buildDose(kind, extra=""){
+      const x = sanitize(extra);
+      const base = `ATIVAR DOSE ${kind}`;
+      if(kind === "CRIATIVA"){
+        return `${base} — Nova + Genus (materializar) + toque Artemis (explorar). Tema: ${x || "ideias e desbloqueio"}. Entrega em doses: valor → curiosidade → antecipação.`;
+      }
+      if(kind === "EMPRESARIAL"){
+        return `${base} — Atlas (planejar) + Solus (estratégia) + Serena (equilíbrio). Tema: ${x || "produtividade e foco"}. Entrega em doses: valor → curiosidade → antecipação.`;
+      }
+      if(kind === "FITNESS"){
+        return `${base} — Vitalis (energia) + Pulse (ritmo) + Serena (recuperação). Tema: ${x || "treino e disciplina"}. Entrega em doses: valor → curiosidade → antecipação.`;
+      }
+      return `${base} — Tema: ${x || "personalizar"} — Entrega em doses: valor → curiosidade → antecipação.`;
+    }
+
+    /* =========================
+       UI actions
+       ========================= */
+    document.addEventListener("click", (e) => {
+      const act = e.target.closest("[data-activate]");
+      if(act){
+        const kind = act.getAttribute("data-activate");
+        setCommand(buildActivation(kind, txtEl.value));
+      }
+
+      const dose = e.target.closest("[data-dose]");
+      if(dose){
+        const kind = dose.getAttribute("data-dose");
+        setCommand(buildDose(kind, txtEl.value));
+      }
+
+      const quick = e.target.closest("[data-quick]");
+      if(quick){
+        const k = quick.getAttribute("data-quick");
+        if(k === "DOSE_CRIATIVA") setCommand(buildDose("CRIATIVA", txtEl.value));
+        else setCommand(buildActivation(k, txtEl.value));
+        closeMenu();
+      }
+    });
+
+    $("#btnCustom").addEventListener("click", () => {
+      const x = sanitize(txtEl.value);
+      setCommand(buildDose("PERSONALIZADA", x || "definir objetivo e gatilhos"));
+    });
+
+    $("#btnCopy").addEventListener("click", async () => {
+      const v = sanitize(outEl.value);
+      if(!v){ addLog("Nada para copiar."); return; }
+      try{
+        await navigator.clipboard.writeText(v);
+        addLog("Copiado para a área de transferência ✨");
+      }catch(err){
+        addLog("Falha ao copiar (permissão do navegador). Selecione e copie manualmente.");
+      }
+    });
+
+    $("#btnClear").addEventListener("click", () => {
+      logEl.textContent = "";
+      addLog("Log limpo.");
+    });
+
+    /* =========================
+       Config persist (localStorage)
+       ========================= */
+    const LS_KEY = "infodex.activation.config.v1";
+
+    function saveConfig(){
+      const cfg = {
+        theme: document.documentElement.getAttribute("data-theme"),
+        iframeUrl: sanitize($("#iframeUrl").value),
+        note: sanitize(txtEl.value),
+        profile: PROFILE
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      addLog("Config salva 💾");
+    }
+
+    function loadConfig(){
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw){ addLog("Nenhuma config salva."); return; }
+      try{
+        const cfg = JSON.parse(raw);
+        if(cfg.theme) setTheme(cfg.theme);
+        if(cfg.iframeUrl) $("#iframeUrl").value = cfg.iframeUrl;
+        if(cfg.note) txtEl.value = cfg.note;
+        addLog("Config carregada ✅");
+      }catch(e){
+        addLog("Config inválida no storage.");
+      }
+    }
+
+    $("#btnSave").addEventListener("click", saveConfig);
+    $("#btnLoad").addEventListener("click", loadConfig);
+
+    /* =========================
+       Theme
+       ========================= */
+    function setTheme(v){
+      document.documentElement.setAttribute("data-theme", v);
+      $("#themeSel").value = v;
+      addLog(`Tema: ${v}`);
+    }
+    $("#themeSel").addEventListener("change", (e) => setTheme(e.target.value));
+
+    /* =========================
+       Botão Único menu
+       ========================= */
+    const menu = $("#menu");
+    const fab = $("#btnKOBLLUX");
+
+    function openMenu(){
+      menu.classList.add("open");
+      fab.setAttribute("aria-expanded", "true");
+    }
+    function closeMenu(){
+      menu.classList.remove("open");
+      fab.setAttribute("aria-expanded", "false");
+    }
+    fab.addEventListener("click", () => {
+      menu.classList.contains("open") ? closeMenu() : openMenu();
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!menu.contains(e.target) && e.target !== fab){
+        closeMenu();
+      }
+    });
+
+    $("#menuFechar").addEventListener("click", closeMenu);
+
+    $("#menuArte").addEventListener("click", () => {
+      addLog("ArteASC:");
+      addLog(ArteASC.render("portal369", { tri: "INFODEX" }));
+      addLog(ArteASC.render("seal_trinity_v2", { pulso: "ON", modo: "KOBLLUX" }));
+      closeMenu();
+    });
+
+    $("#menuConfigs").addEventListener("click", () => {
+      addLog("PROFILE:");
+      addLog(JSON.stringify(PROFILE, null, 2));
+      closeMenu();
+    });
+
+    $("#menuAbrir").addEventListener("click", () => {
+      const url = sanitize($("#iframeUrl").value);
+      if(!url){ addLog("Defina a URL do Infodex."); return; }
+      openIFrame(url, "Infodex");
+      closeMenu();
+    });
+
+    /* =========================
+       iFrame overlay (ESC/backdrop)
+       ========================= */
+    const overlay = $("#overlay");
+    const ifr = $("#ifr");
+    const ifrTitle = $("#ifrTitle");
+    const reopen = $("#reopen");
+    let lastUrl = "";
+
+    function openIFrame(url, title="Painel"){
+      lastUrl = url;
+      ifr.src = url;
+      ifrTitle.textContent = title;
+      ifrTitle.title = title;
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      reopen.classList.remove("show");
+      addLog(`iFrame aberto: ${url}`);
+    }
+
+    function closeIFrame(){
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+      reopen.classList.add("show");
+      addLog("iFrame fechado (badge disponível).");
+    }
+
+    function minimizeIFrame(){
+      closeIFrame();
+    }
+
+    function maximizeIFrame(){
+      const wrap = overlay.querySelector(".ifr-wrap");
+      if(wrap.dataset.max === "1"){
+        wrap.style.width = "";
+        wrap.style.height = "";
+        wrap.dataset.max = "0";
+        addLog("iFrame: modo normal");
+      }else{
+        wrap.style.width = "min(96vw, 1400px)";
+        wrap.style.height = "min(92vh, 900px)";
+        wrap.dataset.max = "1";
+        addLog("iFrame: maximizado");
+      }
+    }
+
+    function popoutIFrame(){
+      if(!lastUrl){ addLog("Sem URL para pop-out."); return; }
+      window.open(lastUrl, "_blank", "noopener,noreferrer");
+      addLog("Pop-out aberto em nova aba.");
+    }
+
+    $("#btnOpenIframe").addEventListener("click", () => {
+      const url = sanitize($("#iframeUrl").value);
+      if(!url){ addLog("Defina a URL do Infodex."); return; }
+      openIFrame(url, "Infodex");
+    });
+
+    $("#ifrClose").addEventListener("click", closeIFrame);
+    $("#ifrMin").addEventListener("click", minimizeIFrame);
+    $("#ifrMax").addEventListener("click", maximizeIFrame);
+    $("#ifrPop").addEventListener("click", popoutIFrame);
+
+    // backdrop click fecha (se habilitado)
+    overlay.addEventListener("click", (e) => {
+      if(!PROFILE.iframe.close_on_backdrop) return;
+      if(e.target === overlay) closeIFrame();
+    });
+
+    // ESC fecha (se habilitado)
+    document.addEventListener("keydown", (e) => {
+      if(!PROFILE.iframe.esc_key_closes) return;
+      if(e.key === "Escape" && overlay.classList.contains("open")) closeIFrame();
+      if(e.key === "Escape" && menu.classList.contains("open")) closeMenu();
+    });
+
+    reopen.addEventListener("click", () => {
+      if(!lastUrl){ addLog("Sem URL para reabrir."); return; }
+      openIFrame(lastUrl, "Infodex");
+    });
+
+    /* =========================
+       Boot
+       ========================= */
+    (function init(){
+      setTheme("nebula");
+      addLog("Infodex Ativação — ONLINE");
+      addLog(ArteASC.render("portal369", { tri: "KOBLLUX" }));
+      loadConfig();
+      setCommand(buildActivation("PADILLA", "iniciar com alvo definido"));
+    })();
+  </script>
+</body>
+</html>
